@@ -1,6 +1,7 @@
 import numpy as np
 from copy import deepcopy
 from functools import reduce
+import sys
 from operator import add
 
 HashArr=["C","N","E","S","W"]
@@ -8,6 +9,7 @@ HashArr1=["R","D"]
 
 NewUtil=np.NINF
 BestAction="NULL"
+
 HEALTH_RANGE = 5
 ARROWS_RANGE = 4
 MATERIALS_RANGE=3
@@ -56,9 +58,13 @@ utilities = np.zeros((HEALTH_RANGE, ARROWS_RANGE, MATERIALS_RANGE, POSITION_RANG
 policies = np.full((HEALTH_RANGE, ARROWS_RANGE, MATERIALS_RANGE, POSITION_RANGE, MONSTER_STATES_RANGE), -1, dtype='int')
 temp=np.zeros(utilities.shape)
 
+orig_stdout = sys.stdout
+f = open("./outputs/part_2_task_2.1_trace.txt", "w")
+sys.stdout = f
+
 def value_iteration():
     global utilities
-    index = 1
+    index = 0
     while True: # one iteration of value iteration
         delta = 0
         # temp=np.zeros(utilities.shape)
@@ -226,10 +232,10 @@ def action(state):
             state3= State( state.health , state.arrows, state.materials,2,1) #MM stays dormant : Failure of Action
             state4= State( state.health , state.arrows, state.materials,2,0) #MM becomes ready : Failure of Action
 
-            StayCost= (0.85 * 0.8 *(  REWARD[state1.show()] + GAMMA*utilities[state1.show()])
-            + 0.85 * 0.2 *( REWARD[state2.show()] + GAMMA*utilities[state2.show()])
-            + 0.15 * 0.8 *(REWARD[state3.show()] + GAMMA*utilities[state3.show()])
-            + 0.15 * 0.2 *(REWARD[state4.show()] + GAMMA*utilities[state4.show()]))
+            StayCost= (0.85 * 0.8 *(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
+            + 0.85 * 0.2 *(COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()])
+            + 0.15 * 0.8 *(COST + REWARD[state3.show()] + GAMMA*utilities[state3.show()])
+            + 0.15 * 0.2 *(COST + REWARD[state4.show()] + GAMMA*utilities[state4.show()]))
                     
 
         elif(state.monsterState==0):  #Ready state
@@ -239,9 +245,9 @@ def action(state):
             state4= State( min(state.health+1,4) , 0, state.materials,0,1) #MM attacks and become dormant : UNSUCCESSFUL
 
             StayCost= (0.85 * 0.5 *(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
-            + 0.85 * 0.5 *(COST-COST + REWARD[state2.show()] - 40+ GAMMA*utilities[state2.show()])
-            + 0.15 * 0.5 *(COST-COST + REWARD[state3.show()] + GAMMA*utilities[state3.show()])
-            + 0.15 * 0.5 *(COST-COST + REWARD[state4.show()] -40 + GAMMA*utilities[state4.show()]))
+            + 0.85 * 0.5 *(COST + REWARD[state2.show()] - 40+ GAMMA*utilities[state2.show()])
+            + 0.15 * 0.5 *(COST + REWARD[state3.show()] + GAMMA*utilities[state3.show()])
+            + 0.15 * 0.5 *(COST + REWARD[state4.show()] -40 + GAMMA*utilities[state4.show()]))
 
 
         #SHOOT
@@ -328,9 +334,9 @@ def action(state):
             state4= State( state.health , state.arrows, state.materials,2,0) #Failure of Action : Becomes ready
 
             StayCost= (0.85*0.8*(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
-            + 0.15*0.8*(COST-COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()])
-            + 0.85*0.2*(COST-COST + REWARD[state3.show()] + GAMMA*utilities[state3.show()])
-            + 0.15*0.2*(COST-COST + REWARD[state4.show()] + GAMMA*utilities[state4.show()]))
+            + 0.15*0.8*(COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()])
+            + 0.85*0.2*(COST + REWARD[state3.show()] + GAMMA*utilities[state3.show()])
+            + 0.15*0.2*(COST + REWARD[state4.show()] + GAMMA*utilities[state4.show()]))
 
         elif(state.monsterState==0): #Ready
             state1= State( state.health , state.arrows, state.materials,1,0) #Success of Action : Stays Ready
@@ -378,8 +384,8 @@ def action(state):
         
         #Move Left
         if(state.monsterState==1):  #Dormant state
-            state1= State( state.health , state.arrows, state.materials,0,1) #MM stays dormant : Success of Action
-            state2= State( state.health , state.arrows, state.materials,0,0) #MM becomes ready : Success of Action
+            state1= State( state.health , state.arrows, state.materials,4,1) #MM stays dormant : Success of Action
+            state2= State( state.health , state.arrows, state.materials,4,0) #MM becomes ready : Success of Action
 
             LeftCost= (0.8 *(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
             + 0.2 *(COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()]))
@@ -387,7 +393,7 @@ def action(state):
                     
 
         elif(state.monsterState==0):  #Ready state
-            state1= State( state.health , state.arrows, state.materials,0,0) #MM stays ready : Success of Action
+            state1= State( state.health , state.arrows, state.materials,4,0) #MM stays ready : Success of Action
             state2= State( min(state.health+1,4) , 0, state.materials,2,1) #MM attacks and become dormant : UNSUCCESSFUL
 
             LeftCost= (0.5 *(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
@@ -399,16 +405,16 @@ def action(state):
             state1= State( state.health , state.arrows, state.materials,2,1) #MM stays dormant : Success of Action
             state2= State( state.health , state.arrows, state.materials,2,0) #MM becomes ready : Success of Action
 
-            StayCost= (0.8 *(COST-COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
-            +0.2 *(COST-COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()]))
+            StayCost= (0.8 *(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
+            +0.2 *(COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()]))
                     
 
         elif(state.monsterState==0):  #Ready state
             state1= State( state.health , state.arrows, state.materials,2,0) #MM stays ready : Success of Action
             state2= State( min(state.health+1,4) , 0, state.materials,2,1)  #MM attacks and become dormant : UNSUCCESSFUL
 
-            StayCost= (0.5 *(COST-COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
-            + 0.5 *(COST-COST + REWARD[state2.show()] - 40+ GAMMA*utilities[state2.show()]))
+            StayCost= (0.5 *(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
+            + 0.5 *(COST + REWARD[state2.show()] - 40+ GAMMA*utilities[state2.show()]))
 
 
         #SHOOT
@@ -452,7 +458,7 @@ def action(state):
         elif(state.monsterState==0):  #Ready state
             state1= State( max(state.health-2,0) , state.arrows, state.materials,2,0) #MM stays ready : Success of Action
             state2= State( min(state.health+1,4) , 0, state.materials,2,1) #MM attacks and become dormant : UNSUCCESSFUL
-            state3= State( state.health , max(state.arrows-1,0), state.materials,2,0) #MM stays ready  : Failure of Action
+            state3= State( state.health , state.arrows, state.materials,2,0) #MM stays ready  : Failure of Action
             state4= State( min(state.health+1,4) , 0, state.materials,2,1) #MM attacks and become dormant : UNSUCCESSFUL
 
             HitCost= (0.2 * 0.5 *(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
@@ -494,10 +500,10 @@ def action(state):
             state3= State( state.health , state.arrows, state.materials,3,0) #Success of Action : Becomes ready
             state4= State( state.health , state.arrows, state.materials,2,0) #Failure of Action : Becomes ready
 
-            StayCost= (0.85*0.8*(COST-COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
-            + 0.15*0.8*(COST-COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()])
-            + 0.85*0.2*(COST -COST+ REWARD[state3.show()] + GAMMA*utilities[state3.show()])
-            + 0.15*0.2*(COST-COST + REWARD[state4.show()] + GAMMA*utilities[state4.show()]))
+            StayCost= (0.85*0.8*(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
+            + 0.15*0.8*(COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()])
+            + 0.85*0.2*(COST + REWARD[state3.show()] + GAMMA*utilities[state3.show()])
+            + 0.15*0.2*(COST + REWARD[state4.show()] + GAMMA*utilities[state4.show()]))
 
         elif(state.monsterState==0): #Ready
             state1= State( state.health , state.arrows, state.materials,3,0) #Success of Action : Stays Ready
@@ -506,9 +512,9 @@ def action(state):
             state4= State( state.health , state.arrows, state.materials,2,1) #Failure of Action : Attack
 
             StayCost= (0.85*0.5*(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
-            + 0.15*0.5*(COST-COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()])
-            + 0.85*0.5*(COST-COST + REWARD[state3.show()] + GAMMA*utilities[state3.show()])
-            + 0.15*0.5*(COST-COST + REWARD[state4.show()] + GAMMA*utilities[state4.show()]))
+            + 0.15*0.5*(COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()])
+            + 0.85*0.5*(COST + REWARD[state3.show()] + GAMMA*utilities[state3.show()])
+            + 0.15*0.5*(COST + REWARD[state4.show()] + GAMMA*utilities[state4.show()]))
 
         
         #Gather
@@ -526,8 +532,8 @@ def action(state):
         elif(state.monsterState==0):# Ready
             state1= State( state.health , state.arrows, min(state.materials+1,2),3,0)
             state2= State( state.health , state.arrows, state.materials,3,0) 
-            state4= State( state.health , state.arrows, min(state.materials+1,2),3,1)
-            state3= State( state.health , state.arrows, state.materials,3,1) 
+            state3= State( state.health , state.arrows, min(state.materials+1,2),3,1)
+            state4= State( state.health , state.arrows, state.materials,3,1) 
         
             GatherCost = (0.75*0.5*(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
             + 0.25 *0.5*(COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()])
@@ -552,19 +558,23 @@ def action(state):
                          + 0.5*(COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()]))
 
 
+        # #STAY
         
+        # state1= State( state.health , state.arrows, state.materials,4,state.monsterState) # Success of Action
+        # StayCost= (COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
+                
         #STAY
         if(state.monsterState==1): #Dormant
             state1= State( state.health , state.arrows, state.materials,4,1) # Success of Action
             state2= State( state.health , state.arrows, state.materials,4,0) # Success of Action
-            StayCost= (0.8*(COST-COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
-                         + 0.2*(COST-COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()]))
+            StayCost= (0.8*(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
+                         + 0.2*(COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()]))
         
         elif(state.monsterState==0): #Ready
             state1= State( state.health , state.arrows, state.materials,4,0) # Success of Action
             state2= State( state.health , state.arrows, state.materials,4,1) # Success of Action
-            StayCost= (0.5*(COST-COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
-                         + 0.5*(COST-COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()]))
+            StayCost= (0.5*(COST + REWARD[state1.show()] + GAMMA*utilities[state1.show()])
+                         + 0.5*(COST + REWARD[state2.show()] + GAMMA*utilities[state2.show()]))
 
         #SHOOT
         if(state.arrows>=1):
@@ -646,7 +656,7 @@ def action(state):
 def trace(iteration, utilities, policies):
     print(f'iteration={iteration}')
 
-    utilities=np.around(utilities,4)
+    # utilities=np.around(utilities,4)
     for state, util in np.ndenumerate(utilities):
         # util=np.around(util)
         util_str = '{:.3f}'.format(util)
@@ -676,7 +686,7 @@ def trace(iteration, utilities, policies):
         elif policies[state] == 8:
             act_str = 'SHOOT'
         
-        print(f'( {HashArr[state[3]]}, {state[2]}, {state[1]}, {HashArr1[state[4]]}, {state[0] * 25}):{act_str}=[{util_str}]')
+        print(f'({HashArr[state[3]]},{state[2]},{state[1]},{HashArr1[state[4]]},{state[0] * 25}):{act_str}=[{util_str}]')
 
     print("\n\n")
 # SSS=State(1,0,0,0,1)
@@ -685,3 +695,5 @@ def trace(iteration, utilities, policies):
 
 
 value_iteration()
+sys.stdout = orig_stdout
+f.close()
